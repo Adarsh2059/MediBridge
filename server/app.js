@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
+import authRoutes from "./routes/authRoutes.js";
+import errorHandler from "./middlewares/errorHandler.js";
+
 const app = express();
 
 app.use(
@@ -22,5 +25,14 @@ app.get("/api/health", (req, res) => {
         environment: process.env.NODE_ENV || "development"
     });
 });
+
+app.use(
+    "/api/auth",
+    authRoutes
+);
+
+app.use(
+    errorHandler
+);
 
 export default app;

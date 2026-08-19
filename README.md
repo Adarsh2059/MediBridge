@@ -86,3 +86,34 @@ Express Backend
       |
       v
 MongoDB
+
+## Authentication
+
+MediBridge uses JWT-based authentication with role-based access control.
+
+### Supported Roles
+
+- Patient
+- Doctor
+- Admin
+
+### Authentication APIs
+
+| Method | Endpoint | Authentication |
+|---|---|---|
+| POST | `/api/auth/register` | Public |
+| POST | `/api/auth/login` | Public |
+| GET | `/api/auth/me` | Required |
+
+### Registration
+
+Public registration creates patient accounts.
+
+Doctor and admin accounts are controlled through authorized administrative workflows.
+
+### Authentication Header
+
+Protected endpoints use:
+
+```text
+Authorization: Bearer <JWT>
