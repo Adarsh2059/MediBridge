@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/authRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
+import doctorRoutes from "./routes/doctorRoutes.js";
 
 const app = express();
 
@@ -29,6 +30,11 @@ app.get("/api/health", (req, res) => {
 app.use(
     "/api/auth",
     authRoutes
+);
+
+app.use(
+    "/api/doctors",
+    doctorRoutes
 );
 
 app.use(
