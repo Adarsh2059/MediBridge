@@ -7,6 +7,7 @@ import errorHandler from "./middlewares/errorHandler.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 import availabilityRoutes from "./routes/availabilityRoutes.js";
+import appointmentRoutes from "./routes/appointmentRoutes.js";
 
 const app = express();
 
@@ -47,6 +48,11 @@ app.use(
 app.use(
     "/api/doctors",
     availabilityRoutes
+);
+
+app.use(
+    "/api/appointments",
+    appointmentRoutes
 );
 
 app.use(
