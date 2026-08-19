@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
+import leaveRoutes from "./routes/leaveRoutes.js";
+import availabilityRoutes from "./routes/availabilityRoutes.js";
 
 const app = express();
 
@@ -35,6 +37,16 @@ app.use(
 app.use(
     "/api/doctors",
     doctorRoutes
+);
+
+app.use(
+    "/api/doctors",
+    leaveRoutes
+);
+
+app.use(
+    "/api/doctors",
+    availabilityRoutes
 );
 
 app.use(
