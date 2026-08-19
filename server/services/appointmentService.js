@@ -3,9 +3,12 @@ import mongoose from "mongoose";
 import Appointment from "../models/Appointment.js";
 import AppointmentHold from "../models/AppointmentHold.js";
 import DoctorProfile from "../models/DoctorProfile.js";
-import DoctorLeave from "../models/DoctorLeave.js";
 import User from "../models/User.js";
 
+import {
+    APPOINTMENT_STATUS,
+    ACTIVE_APPOINTMENT_STATUSES
+} from "../constants/appointmentStatus.js";
 
 import ApiError from "../utils/ApiError.js";
 
@@ -14,14 +17,12 @@ import {
 } from "./availabilityService.js";
 
 import {
-    APPOINTMENT_STATUS,
-    ACTIVE_APPOINTMENT_STATUSES
-} from "../constants/appointmentStatus.js";
+    isValidDateString
+} from "../utils/dateUtils.js";
 
 import {
-    isValidDateString,
-    timeToMinutes
-} from "../utils/dateUtils.js";
+    createPreVisitAssessment
+} from "./preVisitService.js";
 
 const HOLD_DURATION_MINUTES = 5;
 
@@ -40,11 +41,13 @@ const populateAppointment = (query) => {
         })
         .populate({
             path: "rescheduledFrom",
-            select: "date startTime endTime status"
+            select:
+                "date startTime endTime status"
         })
         .populate({
             path: "rescheduledTo",
-            select: "date startTime endTime status"
+            select:
+                "date startTime endTime status"
         });
 };
 
@@ -56,7 +59,8 @@ const ensureDoctorExists = async (
             doctorId
         ).populate({
             path: "user",
-            select: "name email isActive role"
+            select:
+                "name email isActive role"
         });
 
     if (
@@ -92,7 +96,9 @@ const validateSlot = async ({
             date
         );
 
-    if (availability.isOnLeave) {
+    if (
+        availability.isOnLeave
+    ) {
         throw new ApiError(
             409,
             "Doctor is on leave on the selected date"
@@ -102,8 +108,10 @@ const validateSlot = async ({
     const matchingSlot =
         availability.slots.find(
             (slot) =>
-                slot.start === startTime &&
-                slot.end === endTime
+                slot.start ===
+                    startTime &&
+                slot.end ===
+                    endTime
         );
 
     if (!matchingSlot) {
@@ -114,18 +122,20 @@ const validateSlot = async ({
     }
 
     /*
-     * The slot must be completely available.
+     * A slot must be completely available.
      *
-     * "held" means another patient currently
-     * has a temporary reservation.
+     * held   → another patient has a
+     *           temporary reservation
      *
-     * "booked" means the appointment already exists.
+     * booked → appointment already exists
      */
     if (
-        matchingSlot.status !== "available"
+        matchingSlot.status !==
+        "available"
     ) {
         if (
-            matchingSlot.status === "held"
+            matchingSlot.status ===
+            "held"
         ) {
             throw new ApiError(
                 409,
@@ -134,7 +144,8 @@ const validateSlot = async ({
         }
 
         if (
-            matchingSlot.status === "booked"
+            matchingSlot.status ===
+            "booked"
         ) {
             throw new ApiError(
                 409,
@@ -163,10 +174,9 @@ export const holdSlot = async ({
         );
     }
 
-    const doctor =
-        await ensureDoctorExists(
-            doctorId
-        );
+    await ensureDoctorExists(
+        doctorId
+    );
 
     const patient =
         await User.findById(
@@ -206,10 +216,10 @@ export const holdSlot = async ({
     }
 
     /*
-     * Clean expired holds belonging to this slot.
+     * MongoDB TTL deletion is asynchronous.
      *
-     * MongoDB TTL deletion is asynchronous, so we
-     * don't rely solely on TTL for immediate availability.
+     * Therefore we explicitly remove expired
+     * holds before trying to create a new one.
      */
     await AppointmentHold.deleteMany({
         doctor: doctorId,
@@ -248,6 +258,13 @@ export const holdSlot = async ({
             expiresAt
         };
     } catch (error) {
+        /*
+         * Unique index:
+         *
+         * doctor + date + startTime
+         *
+         * prevents two simultaneous holds.
+         */
         if (
             error.code === 11000
         ) {
@@ -267,13 +284,27 @@ export const createAppointment = async ({
     symptoms,
     bookingNotes = ""
 }) => {
-    if (!symptoms?.trim()) {
+    /*
+     * Symptoms are mandatory.
+     */
+    if (
+        !symptoms?.trim()
+    ) {
         throw new ApiError(
             400,
             "Symptoms are required before confirming an appointment"
         );
     }
 
+    const cleanedSymptoms =
+        symptoms.trim();
+
+    const cleanedBookingNotes =
+        bookingNotes?.trim() || "";
+
+    /*
+     * Validate the patient's hold.
+     */
     const hold =
         await AppointmentHold.findOne({
             _id: holdId,
@@ -290,16 +321,17 @@ export const createAppointment = async ({
         );
     }
 
-    const doctor =
-        await ensureDoctorExists(
-            hold.doctor
-        );
+    /*
+     * Make sure doctor still exists
+     * and is active.
+     */
+    await ensureDoctorExists(
+        hold.doctor
+    );
 
     /*
-     * Revalidate the slot before final booking.
-     *
-     * This protects against changes that happened
-     * after the hold was created.
+     * Revalidate availability immediately
+     * before booking.
      */
     await validateSlot({
         doctorId: hold.doctor,
@@ -308,18 +340,38 @@ export const createAppointment = async ({
         endTime: hold.endTime
     });
 
+    /*
+     * --------------------------------------------------
+     * CRITICAL BOOKING TRANSACTION
+     * --------------------------------------------------
+     *
+     * Appointment creation and hold deletion
+     * happen atomically.
+     */
     const session =
         await mongoose.startSession();
+
+    let appointment;
 
     try {
         session.startTransaction();
 
+        /*
+         * Final conflict check inside
+         * the transaction.
+         */
         const conflictingAppointment =
             await Appointment.findOne(
                 {
-                    doctor: hold.doctor,
-                    date: hold.date,
-                    startTime: hold.startTime,
+                    doctor:
+                        hold.doctor,
+
+                    date:
+                        hold.date,
+
+                    startTime:
+                        hold.startTime,
+
                     status: {
                         $in:
                             ACTIVE_APPOINTMENT_STATUSES
@@ -327,33 +379,45 @@ export const createAppointment = async ({
                 }
             ).session(session);
 
-        if (conflictingAppointment) {
+        if (
+            conflictingAppointment
+        ) {
             throw new ApiError(
                 409,
                 "This slot has already been booked"
             );
         }
 
-        const [appointment] =
+        /*
+         * Create the appointment.
+         */
+        const createdAppointments =
             await Appointment.create(
                 [
                     {
                         doctor:
                             hold.doctor,
+
                         patient:
                             hold.patient,
+
                         date:
                             hold.date,
+
                         startTime:
                             hold.startTime,
+
                         endTime:
                             hold.endTime,
+
                         status:
                             APPOINTMENT_STATUS.BOOKED,
+
                         symptoms:
-                            symptoms.trim(),
+                            cleanedSymptoms,
+
                         bookingNotes:
-                            bookingNotes.trim()
+                            cleanedBookingNotes
                     }
                 ],
                 {
@@ -361,22 +425,34 @@ export const createAppointment = async ({
                 }
             );
 
-        await AppointmentHold.deleteOne({
-            _id: hold._id
-        }).session(session);
+        appointment =
+            createdAppointments[0];
 
+        /*
+         * Consume the temporary hold.
+         */
+        await AppointmentHold.deleteOne(
+            {
+                _id: hold._id
+            }
+        ).session(session);
+
+        /*
+         * Commit booking BEFORE calling Gemini.
+         *
+         * This is intentional.
+         */
         await session.commitTransaction();
-
-        const populatedAppointment =
-            await populateAppointment(
-                Appointment.findById(
-                    appointment._id
-                )
-            );
-
-        return populatedAppointment;
     } catch (error) {
-        await session.abortTransaction();
+        /*
+         * Only abort if the transaction is
+         * still active.
+         */
+        if (
+            session.inTransaction()
+        ) {
+            await session.abortTransaction();
+        }
 
         if (
             error.code === 11000
@@ -391,6 +467,69 @@ export const createAppointment = async ({
     } finally {
         await session.endSession();
     }
+
+    /*
+     * --------------------------------------------------
+     * AI PRE-VISIT ANALYSIS
+     * --------------------------------------------------
+     *
+     * IMPORTANT:
+     *
+     * The appointment has already been committed.
+     *
+     * Therefore Gemini failure CANNOT cancel
+     * or block the appointment.
+     */
+    let preVisitAssessment =
+        null;
+
+    try {
+        preVisitAssessment =
+            await createPreVisitAssessment(
+                {
+                    appointmentId:
+                        appointment._id,
+
+                    patientId:
+                        patientId,
+
+                    symptoms:
+                        cleanedSymptoms
+                }
+            );
+    } catch (error) {
+        /*
+         * AI failure is intentionally swallowed.
+         *
+         * createPreVisitAssessment()
+         * already stores the failed state.
+         *
+         * The appointment remains BOOKED.
+         */
+        console.error(
+            "AI pre-visit analysis failed after appointment booking:",
+            error.message
+        );
+    }
+
+    /*
+     * Fetch the final populated appointment.
+     */
+    const populatedAppointment =
+        await populateAppointment(
+            Appointment.findById(
+                appointment._id
+            )
+        );
+
+    /*
+     * We currently return the appointment
+     * exactly as the existing controller expects.
+     *
+     * The AI assessment is persisted separately
+     * in PreVisitAssessment.
+     */
+    return populatedAppointment;
 };
 
 export const getAppointmentById = async ({
@@ -456,25 +595,45 @@ export const getAppointments = async ({
     status,
     date
 }) => {
-    const currentPage = Math.max(
-        Number(page) || 1,
-        1
-    );
+    const currentPage =
+        Math.max(
+            Number(page) || 1,
+            1
+        );
 
-    const pageLimit = Math.min(
-        Math.max(Number(limit) || 10, 1),
-        50
-    );
+    const pageLimit =
+        Math.min(
+            Math.max(
+                Number(limit) || 10,
+                1
+            ),
+            50
+        );
 
     const filter = {};
 
-    if (role === "patient") {
-        filter.patient = userId;
-    } else if (role === "doctor") {
+    /*
+     * Patient → own appointments.
+     */
+    if (
+        role === "patient"
+    ) {
+        filter.patient =
+            userId;
+    }
+
+    /*
+     * Doctor → own appointments.
+     */
+    else if (
+        role === "doctor"
+    ) {
         const doctor =
-            await DoctorProfile.findOne({
-                user: userId
-            });
+            await DoctorProfile.findOne(
+                {
+                    user: userId
+                }
+            );
 
         if (!doctor) {
             throw new ApiError(
@@ -487,19 +646,29 @@ export const getAppointments = async ({
             doctor._id;
     }
 
+    /*
+     * Admin intentionally has
+     * no ownership filter.
+     */
     if (status) {
-        filter.status = status;
+        filter.status =
+            status;
     }
 
     if (date) {
-        if (!isValidDateString(date)) {
+        if (
+            !isValidDateString(
+                date
+            )
+        ) {
             throw new ApiError(
                 400,
                 "Invalid date. Expected YYYY-MM-DD"
             );
         }
 
-        filter.date = date;
+        filter.date =
+            date;
     }
 
     const skip =
@@ -511,7 +680,9 @@ export const getAppointments = async ({
         total
     ] = await Promise.all([
         populateAppointment(
-            Appointment.find(filter)
+            Appointment.find(
+                filter
+            )
                 .sort({
                     date: -1,
                     startTime: -1
@@ -519,6 +690,7 @@ export const getAppointments = async ({
                 .skip(skip)
                 .limit(pageLimit)
         ),
+
         Appointment.countDocuments(
             filter
         )
@@ -526,13 +698,21 @@ export const getAppointments = async ({
 
     return {
         appointments,
+
         pagination: {
-            page: currentPage,
-            limit: pageLimit,
+            page:
+                currentPage,
+
+            limit:
+                pageLimit,
+
             total,
-            totalPages: Math.ceil(
-                total / pageLimit
-            )
+
+            totalPages:
+                Math.ceil(
+                    total /
+                        pageLimit
+                )
         }
     };
 };
@@ -566,7 +746,8 @@ export const cancelAppointment = async ({
         role === "doctor" &&
         appointment.doctor;
 
-    let doctorUserId = null;
+    let doctorUserId =
+        null;
 
     if (isDoctor) {
         const doctor =
@@ -579,7 +760,8 @@ export const cancelAppointment = async ({
     }
 
     const isAppointmentDoctor =
-        doctorUserId === userId;
+        doctorUserId ===
+        userId;
 
     if (
         !isAdmin &&

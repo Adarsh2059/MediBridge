@@ -2,7 +2,7 @@
   "name": "medibridge-server",
   "version": "1.0.0",
   "description": "Backend API for MediBridge healthcare appointment and follow-up management platform",
-  "type":"module",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
@@ -18,6 +18,7 @@
   "author": "Adarsh Yadav",
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^2.17.1",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
