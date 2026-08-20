@@ -353,3 +353,51 @@ export const deleteCalendarEvent =
             throw error;
         }
     };
+
+export const updateCalendarEvent = async ({
+    doctorId,
+    eventId,
+    appointment,
+    doctor,
+    patient
+}) => {
+    if (!eventId) {
+        throw new Error("No Google Calendar event ID available to update");
+    }
+
+    const { client, calendarId } = await getDoctorCalendarClient(doctorId);
+
+    const calendar = google.calendar({
+        version: "v3",
+        auth: client
+    });
+
+    const doctorName = doctor?.user?.name || doctor?.name || "Doctor";
+    const patientName = patient?.name || "Patient";
+
+    const event = {
+        summary: `MediBridge Appointment - ${patientName} (Rescheduled)`,
+        description: `MediBridge appointment with ${doctorName}.\n\nSymptoms: ${appointment.symptoms}`,
+        start: {
+            dateTime: `${appointment.date}T${appointment.startTime}:00`,
+            timeZone: process.env.APP_TIMEZONE || "Asia/Kolkata"
+        },
+        end: {
+            dateTime: `${appointment.date}T${appointment.endTime}:00`,
+            timeZone: process.env.APP_TIMEZONE || "Asia/Kolkata"
+        },
+        attendees: [
+            ...(patient?.email ? [{ email: patient.email }] : []),
+            ...(doctor?.user?.email ? [{ email: doctor.user.email }] : [])
+        ]
+    };
+
+    const response = await calendar.events.update({
+        calendarId,
+        eventId,
+        requestBody: event,
+        sendUpdates: "all"
+    });
+
+    return response.data;
+};

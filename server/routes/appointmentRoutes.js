@@ -6,8 +6,10 @@ import {
     getAllAppointments,
     getAppointment,
     cancel,
-    updateStatus
+    updateStatus,
+    reschedule
 } from "../controllers/appointmentController.js";
+
 
 import authenticate from "../middlewares/authMiddleware.js";
 import authorize from "../middlewares/roleMiddleware.js";
@@ -70,4 +72,15 @@ router.patch(
     cancel
 );
 
-export default router;
+router.patch(
+    "/:id/reschedule",
+    authenticate,
+    authorize(
+        ROLES.PATIENT,
+        ROLES.DOCTOR,
+        ROLES.ADMIN
+    ),
+    reschedule
+);
+
+export default router;

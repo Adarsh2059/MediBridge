@@ -4,8 +4,10 @@ import {
     getAppointments,
     getAppointmentById,
     cancelAppointment,
-    updateAppointmentStatus
+    updateAppointmentStatus,
+    rescheduleAppointment
 } from "../services/appointmentService.js";
+
 
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -199,3 +201,45 @@ export const cancel =
             }
         });
     });
+
+export const reschedule =
+    asyncHandler(async (req, res) => {
+        const {
+            newDate,
+            newStartTime,
+            newEndTime
+        } = req.body;
+
+        if (
+            !newDate ||
+            !newStartTime ||
+            !newEndTime
+        ) {
+            throw new ApiError(
+                400,
+                "New date, start time and end time are required for rescheduling"
+            );
+        }
+
+        const appointment =
+            await rescheduleAppointment({
+                appointmentId:
+                    req.params.id,
+                userId:
+                    req.user.id,
+                role:
+                    req.user.role,
+                newDate,
+                newStartTime,
+                newEndTime
+            });
+
+        res.status(200).json({
+            success: true,
+            message:
+                "Appointment rescheduled successfully",
+            data: {
+                appointment
+            }
+        });
+    });

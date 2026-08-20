@@ -10,6 +10,8 @@ import availabilityRoutes from "./routes/availabilityRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import preVisitRoutes from "./routes/preVisitRoutes.js";
 import calendarRoutes from "./routes/calendarRoutes.js";
+import consultationRoutes from "./routes/consultationRoutes.js";
+
 
 const app = express();
 
@@ -66,6 +68,12 @@ app.use(
     "/api/calendar",
     calendarRoutes
 );
+
+app.use(
+    "/api/consultations",
+    consultationRoutes
+);
+
 
 app.use(
     errorHandler

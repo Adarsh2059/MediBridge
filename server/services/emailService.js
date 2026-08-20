@@ -33,6 +33,8 @@ const transporter =
           })
         : null;
 
+import EmailQueue from "../models/EmailQueue.js";
+
 export const sendEmail = async ({
     to,
     subject,
@@ -56,27 +58,52 @@ export const sendEmail = async ({
         );
     }
 
-    const result =
-        await transporter.sendMail({
-            from:
-                process.env.EMAIL_FROM ||
-                process.env.SMTP_USER,
+    try {
+        const result =
+            await transporter.sendMail({
+                from:
+                    process.env.EMAIL_FROM ||
+                    process.env.SMTP_USER,
 
-            to,
+                to,
 
-            subject,
+                subject,
 
-            text,
+                text,
 
-            html
-        });
+                html
+            });
 
-    return {
-        sent: true,
-        messageId:
-            result.messageId
-    };
+        return {
+            sent: true,
+            messageId:
+                result.messageId
+        };
+    } catch (error) {
+        console.error("sendEmail failed. Queuing for background retry:", error.message);
+        try {
+            await EmailQueue.create({
+                to,
+                subject,
+                text: text || "",
+                html: html || "",
+                status: "failed",
+                retryCount: 0,
+                lastError: error.message,
+                nextAttemptAt: new Date(Date.now() + 60 * 1000) // retry in 1 minute
+            });
+        } catch (queueError) {
+            console.error("Failed to queue email to database:", queueError.message);
+        }
+
+        return {
+            sent: false,
+            error: error.message,
+            queued: true
+        };
+    }
 };
+
 
 export const verifyEmailConnection =
     async () => {
@@ -88,3 +115,28 @@ export const verifyEmailConnection =
 
         return true;
     };
+
+export const sendEmailDirect = async ({
+    to,
+    subject,
+    text,
+    html
+}) => {
+    if (!transporter) {
+        return {
+            sent: false,
+            skipped: true
+        };
+    }
+    const result = await transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+        to,
+        subject,
+        text,
+        html
+    });
+    return {
+        sent: true,
+        messageId: result.messageId
+    };
+};

@@ -6,13 +6,16 @@ import DoctorProfile from "../models/DoctorProfile.js";
 import User from "../models/User.js";
 
 import {
-    notifyAppointmentConfirmed
+    notifyAppointmentConfirmed,
+    notifyAppointmentRescheduled
 } from "./notificationService.js";
 
 import {
     createCalendarEvent,
-    deleteCalendarEvent
+    deleteCalendarEvent,
+    updateCalendarEvent
 } from "./googleCalendarService.js";
+
 
 import {
     APPOINTMENT_STATUS,
@@ -507,22 +510,18 @@ export const createAppointment = async ({
      *
      * AI failure does NOT affect the appointment.
      */
-    try {
-        await createPreVisitAssessment({
-            appointmentId:
-                appointment._id,
-
-            patientId,
-
-            symptoms:
-                cleanedSymptoms
-        });
-    } catch (error) {
+    // AI pre-visit analysis is triggered asynchronously so it does NOT block the booking response.
+    createPreVisitAssessment({
+        appointmentId: appointment._id,
+        patientId,
+        symptoms: cleanedSymptoms
+    }).catch((error) => {
         console.error(
-            "AI pre-visit analysis failed after appointment booking:",
+            "AI pre-visit analysis failed asynchronously after appointment booking:",
             error.message
         );
-    }
+    });
+
 
     /*
      * --------------------------------------------------
@@ -1084,3 +1083,129 @@ export const updateAppointmentStatus = async ({
         )
     );
 };
+
+export const rescheduleAppointment = async ({
+    appointmentId,
+    userId,
+    role,
+    newDate,
+    newStartTime,
+    newEndTime
+}) => {
+    if (!isValidDateString(newDate)) {
+        throw new ApiError(400, "Invalid date format. Expected YYYY-MM-DD");
+    }
+
+    const appointment = await populateAppointment(Appointment.findById(appointmentId));
+    if (!appointment) {
+        throw new ApiError(404, "Appointment not found");
+    }
+
+    const isAdmin = role === "admin";
+    const isPatient = appointment.patient?._id.toString() === userId;
+    
+    let isDoctor = false;
+    if (role === "doctor") {
+        const doctor = await DoctorProfile.findOne({ user: userId });
+        if (doctor && appointment.doctor?._id.toString() === doctor._id.toString()) {
+            isDoctor = true;
+        }
+    }
+
+    if (!isAdmin && !isPatient && !isDoctor) {
+        throw new ApiError(403, "You do not have permission to reschedule this appointment");
+    }
+
+    if (!ACTIVE_APPOINTMENT_STATUSES.includes(appointment.status)) {
+        throw new ApiError(400, "Only active (booked or confirmed) appointments can be rescheduled");
+    }
+
+    // Validate the new slot
+    await validateSlot({
+        doctorId: appointment.doctor._id,
+        date: newDate,
+        startTime: newStartTime,
+        endTime: newEndTime
+    });
+
+    const session = await mongoose.startSession();
+    let newAppointment;
+
+    try {
+        session.startTransaction();
+
+        // 1. Mark old appointment as rescheduled
+        appointment.status = APPOINTMENT_STATUS.RESCHEDULED;
+        
+        // 2. Create new appointment
+        const created = await Appointment.create(
+            [
+                {
+                    doctor: appointment.doctor._id,
+                    patient: appointment.patient._id,
+                    date: newDate,
+                    startTime: newStartTime,
+                    endTime: newEndTime,
+                    status: APPOINTMENT_STATUS.BOOKED,
+                    symptoms: appointment.symptoms,
+                    bookingNotes: appointment.bookingNotes,
+                    rescheduledFrom: appointment._id,
+                    googleCalendarEventId: appointment.googleCalendarEventId,
+                    googleCalendarSyncStatus: appointment.googleCalendarSyncStatus
+                }
+            ],
+            { session }
+        );
+        newAppointment = created[0];
+        
+        appointment.rescheduledTo = newAppointment._id;
+        await appointment.save({ session });
+
+        await session.commitTransaction();
+    } catch (error) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        if (error.code === 11000) {
+            throw new ApiError(409, "This slot has already been booked");
+        }
+        throw error;
+    } finally {
+        await session.endSession();
+    }
+
+    // 3. Update Google Calendar event
+    if (newAppointment.googleCalendarEventId) {
+        try {
+            await updateCalendarEvent({
+                doctorId: appointment.doctor._id,
+                eventId: newAppointment.googleCalendarEventId,
+                appointment: newAppointment,
+                doctor: appointment.doctor,
+                patient: appointment.patient
+            });
+            newAppointment.googleCalendarSyncStatus = "synced";
+            newAppointment.googleCalendarSyncError = null;
+            await newAppointment.save();
+        } catch (error) {
+            console.error("Google Calendar reschedule update failed:", error.message);
+            newAppointment.googleCalendarSyncStatus = "failed";
+            newAppointment.googleCalendarSyncError = error.message;
+            await newAppointment.save();
+        }
+    }
+
+    // 4. Send reschedule notifications
+    try {
+        await notifyAppointmentRescheduled({
+            patient: appointment.patient,
+            doctor: appointment.doctor,
+            oldAppointment: appointment,
+            newAppointment
+        });
+    } catch (error) {
+        console.error("Failed to send reschedule notification email:", error.message);
+    }
+
+    return populateAppointment(Appointment.findById(newAppointment._id));
+};
