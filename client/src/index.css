@@ -870,3 +870,672 @@ a {
         font-size: 0.8rem;
     }
 }
+
+/* =========================================
+   DOCTOR DASHBOARD
+   ========================================= */
+
+.dashboard-stat {
+    display: block;
+    margin-top: 12px;
+    font-size: 2rem;
+}
+
+.dashboard-section {
+    margin-top: 32px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.section-heading h2 {
+    margin-top: 4px;
+}
+
+.doctor-appointment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.doctor-appointment-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+
+    padding: 20px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+
+    background: #ffffff;
+}
+
+.doctor-appointment-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.doctor-appointment-main h3 {
+    margin: 4px 0;
+}
+
+.doctor-appointment-main p {
+    margin: 0;
+}
+
+.patient-avatar {
+    width: 48px;
+    height: 48px;
+
+    flex: 0 0 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    font-weight: 700;
+    font-size: 1.1rem;
+
+    background: #eef2ff;
+}
+
+.doctor-appointment-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.doctor-appointment-info p {
+    max-width: 360px;
+    margin: 0;
+
+    line-height: 1.5;
+}
+
+.doctor-appointment-info .primary-btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+    .doctor-appointment-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .doctor-appointment-info {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .doctor-appointment-info p {
+        max-width: none;
+    }
+
+    .doctor-appointment-info .primary-btn {
+        text-align: center;
+    }
+}
+
+/* ================================
+   ADMIN DASHBOARD
+================================ */
+
+.admin-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-hero {
+    margin-bottom: 42px;
+}
+
+.admin-title-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.admin-title-row .primary-btn {
+    flex-shrink: 0;
+}
+
+/* Admin dashboard cards */
+
+.admin-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+}
+
+.admin-action-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+
+    background: #ffffff;
+    border: 1px solid #dce5ee;
+    border-radius: 24px;
+    padding: 30px;
+
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.admin-card-icon {
+    width: 58px;
+    height: 58px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px;
+
+    background: #e4f7f7;
+    color: #0f9fa3;
+
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.admin-card-content {
+    flex: 1;
+}
+
+.admin-card-content h2 {
+    margin: 8px 0 10px;
+}
+
+.admin-card-content p {
+    margin-bottom: 22px;
+}
+
+/* Doctor list */
+
+.admin-doctor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.admin-doctor-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+
+    background: #ffffff;
+    border: 1px solid #dce5ee;
+    border-radius: 22px;
+
+    padding: 24px 28px;
+
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.admin-doctor-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+
+    min-width: 0;
+}
+
+.admin-doctor-avatar {
+    width: 58px;
+    height: 58px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px;
+
+    background: #e4f7f7;
+    color: #0f9fa3;
+
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.admin-doctor-info {
+    min-width: 0;
+}
+
+.admin-doctor-info h2 {
+    margin: 5px 0 6px;
+    font-size: 24px;
+}
+
+.admin-doctor-info p {
+    margin: 3px 0;
+    color: #64748b;
+}
+
+.admin-doctor-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.admin-doctor-meta span {
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    background: #f1f5f9;
+
+    color: #475569;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-doctor-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+
+    flex-shrink: 0;
+}
+
+/* Status */
+
+.status-active {
+    color: #16803c;
+    background: #e8f8ed;
+}
+
+.status-inactive {
+    color: #b42318;
+    background: #fdecec;
+}
+
+/* Delete button */
+
+.danger-btn {
+    border: 1px solid #f1c4c0;
+    background: #ffffff;
+    color: #c62828;
+
+    border-radius: 10px;
+
+    padding: 10px 16px;
+
+    font-weight: 700;
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.danger-btn:hover {
+    background: #fff1f1;
+    border-color: #e7a5a0;
+}
+
+/* Empty state */
+
+.admin-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.admin-empty .primary-btn {
+    margin-top: 12px;
+}
+
+/* ================================
+   RESPONSIVE ADMIN UI
+================================ */
+
+@media (max-width: 900px) {
+    .admin-card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-doctor-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-doctor-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 700px) {
+    .admin-title-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-action-card {
+        padding: 22px;
+    }
+
+    .admin-doctor-card {
+        padding: 20px;
+    }
+
+    .admin-doctor-main {
+        width: 100%;
+    }
+
+    .admin-doctor-info h2 {
+        font-size: 21px;
+    }
+}
+
+@media (max-width: 520px) {
+    .admin-card-grid {
+        gap: 18px;
+    }
+
+    .admin-action-card {
+        flex-direction: column;
+    }
+
+    .admin-doctor-main {
+        flex-direction: column;
+    }
+
+    .admin-doctor-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-doctor-actions button {
+        width: 100%;
+    }
+}
+
+/* ================================
+   ADMIN DOCTOR FORM
+================================ */
+
+.admin-message {
+    margin-bottom: 24px;
+}
+
+.admin-form-card {
+    background: #ffffff;
+    border: 1px solid #dce5ee;
+    border-radius: 24px;
+
+    padding: 36px;
+
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.admin-form-header {
+    margin-bottom: 34px;
+}
+
+.admin-form-header h2 {
+    margin: 8px 0 8px;
+    font-size: 28px;
+}
+
+.admin-form-header p {
+    margin: 0;
+    color: #64748b;
+}
+
+.admin-doctor-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.admin-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.admin-section-heading > span {
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #e4f7f7;
+    color: #0f9fa3;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.admin-section-heading h3 {
+    margin: 0 0 4px;
+    font-size: 20px;
+}
+
+.admin-section-heading p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.admin-form-grid label,
+.admin-full-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-form-grid label > span,
+.admin-full-field > span {
+    color: #172033;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admin-form-grid input,
+.admin-form-grid select,
+.admin-full-field input,
+.admin-full-field textarea {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    border: 1px solid #d5dee8;
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    padding: 13px 15px;
+
+    color: #172033;
+
+    font-family: inherit;
+    font-size: 15px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.admin-form-grid input,
+.admin-form-grid select {
+    min-height: 48px;
+}
+
+.admin-form-grid input:focus,
+.admin-form-grid select:focus,
+.admin-full-field textarea:focus {
+    border-color: #0f9fa3;
+
+    box-shadow:
+        0 0 0 3px rgba(15, 159, 163, 0.10);
+}
+
+.admin-form-grid input::placeholder,
+.admin-full-field textarea::placeholder {
+    color: #94a3b8;
+}
+
+.admin-full-field textarea {
+    min-height: 140px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.admin-full-field small {
+    align-self: flex-end;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.input-with-prefix,
+.input-with-suffix {
+    display: flex;
+    align-items: stretch;
+
+    border: 1px solid #d5dee8;
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    background: #ffffff;
+}
+
+.input-with-prefix > span,
+.input-with-suffix > span {
+    display: flex;
+    align-items: center;
+
+    padding: 0 14px;
+
+    background: #f8fafc;
+
+    color: #64748b;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.input-with-prefix input,
+.input-with-suffix input {
+    border: 0 !important;
+    border-radius: 0 !important;
+
+    box-shadow: none !important;
+
+    min-width: 0;
+}
+
+.input-with-prefix:focus-within,
+.input-with-suffix:focus-within {
+    border-color: #0f9fa3;
+
+    box-shadow:
+        0 0 0 3px rgba(15, 159, 163, 0.10);
+}
+
+.admin-form-divider {
+    height: 1px;
+
+    background: #e7edf3;
+
+    margin: 34px 0;
+}
+
+.admin-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+
+    margin-top: 34px;
+    padding-top: 26px;
+
+    border-top: 1px solid #e7edf3;
+}
+
+.admin-form-actions .primary-btn,
+.admin-form-actions .secondary-btn {
+    min-width: 150px;
+    text-align: center;
+}
+
+/* ================================
+   RESPONSIVE DOCTOR FORM
+================================ */
+
+@media (max-width: 760px) {
+    .admin-form-card {
+        padding: 24px;
+    }
+
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-form-actions {
+        justify-content: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .admin-form-actions .primary-btn,
+    .admin-form-actions .secondary-btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 500px) {
+    .admin-form-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .admin-section-heading {
+        gap: 12px;
+    }
+
+    .admin-section-heading h3 {
+        font-size: 18px;
+    }
+}

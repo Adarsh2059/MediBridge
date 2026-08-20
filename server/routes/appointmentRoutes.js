@@ -5,7 +5,8 @@ import {
     bookAppointment,
     getAllAppointments,
     getAppointment,
-    cancel
+    cancel,
+    updateStatus
 } from "../controllers/appointmentController.js";
 
 import authenticate from "../middlewares/authMiddleware.js";
@@ -38,6 +39,13 @@ router.get(
         ROLES.ADMIN
     ),
     getAllAppointments
+);
+
+router.patch(
+    "/:id/status",
+    authenticate,
+    authorize(ROLES.DOCTOR),
+    updateStatus
 );
 
 router.get(

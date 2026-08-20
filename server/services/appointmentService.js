@@ -969,3 +969,118 @@ export const cancelAppointment = async ({
         )
     );
 };
+
+export const updateAppointmentStatus = async ({
+    appointmentId,
+    userId,
+    role,
+    status
+}) => {
+    if (
+        !mongoose.Types.ObjectId.isValid(
+            appointmentId
+        )
+    ) {
+        throw new ApiError(
+            400,
+            "Invalid appointment ID"
+        );
+    }
+
+    const allowedStatuses = [
+        APPOINTMENT_STATUS.CONFIRMED,
+        APPOINTMENT_STATUS.COMPLETED
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+        throw new ApiError(
+            400,
+            "Invalid appointment status"
+        );
+    }
+
+    const appointment =
+        await Appointment.findById(
+            appointmentId
+        );
+
+    if (!appointment) {
+        throw new ApiError(
+            404,
+            "Appointment not found"
+        );
+    }
+
+    /*
+     * Only the assigned doctor can
+     * confirm or complete an appointment.
+     */
+    if (role !== "doctor") {
+        throw new ApiError(
+            403,
+            "Only the assigned doctor can update appointment status"
+        );
+    }
+
+    const doctor =
+        await DoctorProfile.findById(
+            appointment.doctor
+        );
+
+    if (
+        !doctor ||
+        doctor.user?.toString() !== userId
+    ) {
+        throw new ApiError(
+            403,
+            "You do not have permission to update this appointment"
+        );
+    }
+
+    /*
+     * BOOKED → CONFIRMED
+     */
+    if (
+        status ===
+        APPOINTMENT_STATUS.CONFIRMED
+    ) {
+        if (
+            appointment.status !==
+            APPOINTMENT_STATUS.BOOKED
+        ) {
+            throw new ApiError(
+                409,
+                "Only booked appointments can be confirmed"
+            );
+        }
+    }
+
+    /*
+     * CONFIRMED → COMPLETED
+     */
+    if (
+        status ===
+        APPOINTMENT_STATUS.COMPLETED
+    ) {
+        if (
+            appointment.status !==
+            APPOINTMENT_STATUS.CONFIRMED
+        ) {
+            throw new ApiError(
+                409,
+                "Only confirmed appointments can be completed"
+            );
+        }
+    }
+
+    appointment.status =
+        status;
+
+    await appointment.save();
+
+    return populateAppointment(
+        Appointment.findById(
+            appointment._id
+        )
+    );
+};

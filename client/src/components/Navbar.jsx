@@ -47,6 +47,13 @@ const Navbar = () => {
                             </Link>
                         )}
 
+                        {user.role ===
+                            "admin" && (
+                            <Link to="/admin">
+                                Admin Dashboard
+                            </Link>
+                        )}
+
                         <button
                             type="button"
                             onClick={

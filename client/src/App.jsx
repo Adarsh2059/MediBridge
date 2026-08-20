@@ -22,6 +22,11 @@ import MyAppointments from "./pages/patient/MyAppointments.jsx";
 import AppointmentDetails from "./pages/patient/AppointmentDetails.jsx";
 
 import DoctorDashboard from "./pages/doctor/DoctorDashboard.jsx";
+import DoctorAppointmentDetails from "./pages/doctor/DoctorAppointmentDetails.jsx";
+
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import CreateDoctor from "./pages/admin/CreateDoctor.jsx";
+import ManageDoctors from "./pages/admin/ManageDoctors.jsx";
 
 const App = () => {
     return (
@@ -31,17 +36,23 @@ const App = () => {
 
                 <Routes>
                     {/* Public routes */}
+
                     <Route
                         path="/login"
-                        element={<Login />}
+                        element={
+                            <Login />
+                        }
                     />
 
                     <Route
                         path="/register"
-                        element={<Register />}
+                        element={
+                            <Register />
+                        }
                     />
 
                     {/* Patient routes */}
+
                     <Route
                         element={
                             <ProtectedRoute
@@ -88,6 +99,7 @@ const App = () => {
                     </Route>
 
                     {/* Doctor routes */}
+
                     <Route
                         element={
                             <ProtectedRoute
@@ -103,9 +115,50 @@ const App = () => {
                                 <DoctorDashboard />
                             }
                         />
+
+                        <Route
+                            path="/doctor/appointments/:appointmentId"
+                            element={
+                                <DoctorAppointmentDetails />
+                            }
+                        />
+                    </Route>
+
+                    {/* Admin routes */}
+
+                    <Route
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[
+                                    "admin"
+                                ]}
+                            />
+                        }
+                    >
+                        <Route
+                            path="/admin"
+                            element={
+                                <AdminDashboard />
+                            }
+                        />
+
+                        <Route
+                            path="/admin/doctors"
+                            element={
+                                <ManageDoctors />
+                            }
+                        />
+
+                        <Route
+                            path="/admin/doctors/create"
+                            element={
+                                <CreateDoctor />
+                            }
+                        />
                     </Route>
 
                     {/* Default route */}
+
                     <Route
                         path="/"
                         element={
@@ -117,6 +170,7 @@ const App = () => {
                     />
 
                     {/* Unknown route */}
+
                     <Route
                         path="*"
                         element={

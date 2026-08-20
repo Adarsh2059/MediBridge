@@ -3,7 +3,8 @@ import {
     createAppointment,
     getAppointments,
     getAppointmentById,
-    cancelAppointment
+    cancelAppointment,
+    updateAppointmentStatus
 } from "../services/appointmentService.js";
 
 import ApiError from "../utils/ApiError.js";
@@ -156,6 +157,43 @@ export const cancel =
             success: true,
             message:
                 "Appointment cancelled successfully",
+            data: {
+                appointment
+            }
+        });
+    });
+
+    export const updateStatus =
+    asyncHandler(async (req, res) => {
+        const {
+            status
+        } = req.body;
+
+        if (!status) {
+            throw new ApiError(
+                400,
+                "Appointment status is required"
+            );
+        }
+
+        const appointment =
+            await updateAppointmentStatus({
+                appointmentId:
+                    req.params.id,
+
+                userId:
+                    req.user.id,
+
+                role:
+                    req.user.role,
+
+                status
+            });
+
+        res.status(200).json({
+            success: true,
+            message:
+                "Appointment status updated successfully",
             data: {
                 appointment
             }
