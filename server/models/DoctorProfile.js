@@ -55,43 +55,79 @@ const doctorProfileSchema = new mongoose.Schema(
 
         specialization: {
             type: String,
-            required: [true, "Specialization is required"],
+            required: [
+                true,
+                "Specialization is required"
+            ],
             trim: true,
-            maxlength: [100, "Specialization cannot exceed 100 characters"],
+            maxlength: [
+                100,
+                "Specialization cannot exceed 100 characters"
+            ],
             index: true
         },
 
         qualification: {
             type: String,
-            required: [true, "Qualification is required"],
+            required: [
+                true,
+                "Qualification is required"
+            ],
             trim: true,
-            maxlength: [200, "Qualification cannot exceed 200 characters"]
+            maxlength: [
+                200,
+                "Qualification cannot exceed 200 characters"
+            ]
         },
 
         experience: {
             type: Number,
-            required: [true, "Experience is required"],
-            min: [0, "Experience cannot be negative"],
-            max: [70, "Experience cannot exceed 70 years"]
+            required: [
+                true,
+                "Experience is required"
+            ],
+            min: [
+                0,
+                "Experience cannot be negative"
+            ],
+            max: [
+                70,
+                "Experience cannot exceed 70 years"
+            ]
         },
 
         consultationFee: {
             type: Number,
-            required: [true, "Consultation fee is required"],
-            min: [0, "Consultation fee cannot be negative"]
+            required: [
+                true,
+                "Consultation fee is required"
+            ],
+            min: [
+                0,
+                "Consultation fee cannot be negative"
+            ]
         },
 
         bio: {
             type: String,
             trim: true,
-            maxlength: [1000, "Bio cannot exceed 1000 characters"],
+            maxlength: [
+                1000,
+                "Bio cannot exceed 1000 characters"
+            ],
             default: ""
         },
 
         slotDuration: {
             type: Number,
             required: true,
-            enum: [15, 20, 30, 45, 60],
+            enum: [
+                15,
+                20,
+                30,
+                45,
+                60
+            ],
             default: 30
         },
 
@@ -129,6 +165,44 @@ const doctorProfileSchema = new mongoose.Schema(
             sunday: {
                 type: workingDaySchema,
                 default: () => ({})
+            }
+        },
+
+        /*
+         * Google Calendar OAuth
+         *
+         * The refresh token allows MediBridge
+         * to obtain new access tokens without
+         * asking the doctor to authenticate
+         * for every appointment.
+         */
+        googleCalendar: {
+            connected: {
+                type: Boolean,
+                default: false
+            },
+
+            accessToken: {
+                type: String,
+                default: null,
+                select: false
+            },
+
+            refreshToken: {
+                type: String,
+                default: null,
+                select: false
+            },
+
+            tokenExpiry: {
+                type: Date,
+                default: null,
+                select: false
+            },
+
+            calendarId: {
+                type: String,
+                default: "primary"
             }
         }
     },

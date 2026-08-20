@@ -79,6 +79,39 @@ const appointmentSchema = new mongoose.Schema(
             default: null
         },
 
+        /*
+         * Google Calendar integration.
+         *
+         * These fields are intentionally kept on the
+         * appointment rather than making Google Calendar
+         * the source of truth.
+         */
+        googleCalendarEventId: {
+            type: String,
+            trim: true,
+            default: null,
+            index: true
+        },
+
+        googleCalendarSyncStatus: {
+            type: String,
+            enum: [
+                "pending",
+                "synced",
+                "failed",
+                "not_configured"
+            ],
+            default: "pending",
+            index: true
+        },
+
+        googleCalendarSyncError: {
+            type: String,
+            trim: true,
+            maxlength: 1000,
+            default: null
+        },
+
         rescheduledFrom: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Appointment",
@@ -97,9 +130,10 @@ const appointmentSchema = new mongoose.Schema(
 );
 
 /*
- * This is the database-level double-booking protection.
+ * Database-level double-booking protection.
  *
- * Only active appointments participate in the unique constraint.
+ * Only active appointments participate in
+ * the unique constraint.
  */
 appointmentSchema.index(
     {
@@ -111,7 +145,8 @@ appointmentSchema.index(
         unique: true,
         partialFilterExpression: {
             status: {
-                $in: ACTIVE_APPOINTMENT_STATUSES
+                $in:
+                    ACTIVE_APPOINTMENT_STATUSES
             }
         }
     }
@@ -127,9 +162,10 @@ appointmentSchema.index({
     date: -1
 });
 
-const Appointment = mongoose.model(
-    "Appointment",
-    appointmentSchema
-);
+const Appointment =
+    mongoose.model(
+        "Appointment",
+        appointmentSchema
+    );
 
 export default Appointment;

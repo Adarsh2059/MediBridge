@@ -9,6 +9,7 @@ import leaveRoutes from "./routes/leaveRoutes.js";
 import availabilityRoutes from "./routes/availabilityRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import preVisitRoutes from "./routes/preVisitRoutes.js";
+import calendarRoutes from "./routes/calendarRoutes.js";
 
 const app = express();
 
@@ -59,6 +60,11 @@ app.use(
 app.use(
     "/api/pre-visit",
     preVisitRoutes
+);
+
+app.use(
+    "/api/calendar",
+    calendarRoutes
 );
 
 app.use(
