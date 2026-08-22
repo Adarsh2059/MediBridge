@@ -120,7 +120,7 @@ const DoctorAppointmentDetails = () => {
     }, [appointmentId]);
 
     useEffect(() => {
-        if (!appointmentId || !appointment) return;
+        if (!appointmentId) return;
 
         const loadExtraDetails = async () => {
             try {
@@ -131,7 +131,7 @@ const DoctorAppointmentDetails = () => {
                 console.log("No pre-visit assessment found or failed to load");
             }
 
-            if (appointment.status === "completed") {
+            if (appointment?.status === "completed") {
                 try {
                     const consultationRes = await api.get(`/consultations/appointment/${appointmentId}`);
                     const data = consultationRes.data?.data?.consultation || consultationRes.data?.consultation;
@@ -145,7 +145,7 @@ const DoctorAppointmentDetails = () => {
         };
 
         loadExtraDetails();
-    }, [appointmentId, appointment]);
+    }, [appointmentId, appointment?.status]);
 
     // Poll AI summary generation if processing
     useEffect(() => {
@@ -372,7 +372,7 @@ const DoctorAppointmentDetails = () => {
                                                 style={{ padding: "0.5rem", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "rgba(0,0,0,0.3)", color: "#fff" }}
                                             />
                                             <button type="button" onClick={() => removePrescriptionItem(idx)} style={{ background: "none", border: "none", color: "#ef4444", fontSize: "1.2rem", cursor: "pointer", padding: "0 0.5rem" }} title="Remove">
-                                                ✕
+                                                X
                                             </button>
                                         </div>
                                     ))}
@@ -463,12 +463,12 @@ const DoctorAppointmentDetails = () => {
                         <h3>AI-Generated Patient Copy</h3>
                         {consultation.aiStatus === "processing" && (
                             <p style={{ color: "#f59e0b", fontStyle: "italic" }}>
-                                ⏳ Patient summary is being generated...
+                                Patient summary is being generated...
                             </p>
                         )}
                         {consultation.aiStatus === "failed" && (
                             <p style={{ color: "#ef4444" }}>
-                                ⚠️ Consultation saved. Patient summary is temporarily unavailable.
+                                Consultation saved. Patient summary is temporarily unavailable.
                             </p>
                         )}
                         {consultation.aiStatus === "completed" && consultation.aiSummary && (

@@ -81,6 +81,7 @@ export const sendEmail = async ({
         };
     } catch (error) {
         console.error("sendEmail failed. Queuing for background retry:", error.message);
+        let queued = false;
         try {
             await EmailQueue.create({
                 to,
@@ -92,6 +93,7 @@ export const sendEmail = async ({
                 lastError: error.message,
                 nextAttemptAt: new Date(Date.now() + 60 * 1000) // retry in 1 minute
             });
+            queued = true;
         } catch (queueError) {
             console.error("Failed to queue email to database:", queueError.message);
         }
@@ -99,7 +101,7 @@ export const sendEmail = async ({
         return {
             sent: false,
             error: error.message,
-            queued: true
+            queued
         };
     }
 };

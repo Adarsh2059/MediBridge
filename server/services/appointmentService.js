@@ -925,7 +925,9 @@ export const cancelAppointment = async ({
      * Calendar deletion is best-effort.
      */
     if (
-        appointment.googleCalendarEventId
+        appointment.googleCalendarEventId &&
+        appointment.status !== APPOINTMENT_STATUS.RESCHEDULED &&
+        !appointment.rescheduledTo
     ) {
         try {
             await deleteCalendarEvent({

@@ -359,8 +359,8 @@ export const notifyMedicationReminder = async ({ patient, medicineName, dosage, 
     const html = `<div><h2>Medication Reminder</h2><p>Hello ${patientName},</p><p>It is time to take your prescribed medicine.</p><div style="background-color:#f3f4f6;padding:1rem;border-radius:8px;margin:1rem 0;"><strong>Medicine:</strong> ${medicineName}<br/><strong>Dosage:</strong> ${dosage}<br/><strong>Instructions:</strong> ${instructions || "As directed by doctor"}</div><p>Regards,<br/>MediBridge Team</p></div>`;
 
     try {
-        await sendEmail({ to: patientEmail, subject, text, html });
-        return { sent: true };
+        const result = await sendEmail({ to: patientEmail, subject, text, html });
+        return result;
     } catch (error) {
         console.error("Failed to send medication reminder email:", error.message);
         return { sent: false, error: error.message };

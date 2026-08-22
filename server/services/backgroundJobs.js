@@ -4,6 +4,7 @@ import { notifyMedicationReminder } from "./notificationService.js";
 import { sendEmailDirect } from "./emailService.js";
 
 let intervalId = null;
+let isProcessing = false;
 
 export const processMedicationReminders = async () => {
     try {
@@ -34,13 +35,14 @@ export const processMedicationReminders = async () => {
                     instructions: reminder.instructions
                 });
 
-                if (result.sent) {
+                if (result.sent || result.queued) {
                     reminder.status = "sent";
                     reminder.sentAt = new Date();
                     reminder.errorMessage = null;
                 } else {
                     reminder.retryCount += 1;
                     reminder.errorMessage = result.error || "Failed to send email";
+
                     if (reminder.retryCount >= 3) {
                         reminder.status = "failed";
                     }
@@ -93,7 +95,7 @@ export const processEmailRetries = async () => {
                     if (email.retryCount >= 3) {
                         email.status = "failed";
                     } else {
-                        // Exponential backoff: retry in 2, 4, or 6 minutes
+                        // Linear backoff: retry in 2, 4, or 6 minutes
                         const backoffMinutes = email.retryCount * 2;
                         email.nextAttemptAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
                     }
@@ -126,8 +128,17 @@ export const startBackgroundJobs = () => {
     console.log("[Background Jobs] Starting background jobs worker (interval: 30 seconds)...");
     
     intervalId = setInterval(async () => {
-        await processMedicationReminders();
-        await processEmailRetries();
+        if (isProcessing) {
+            console.warn("[Background Jobs] Previous cycle still running; skipping.");
+            return;
+        }
+        isProcessing = true;
+        try {
+            await processMedicationReminders();
+            await processEmailRetries();
+        } finally {
+            isProcessing = false;
+        }
     }, 30000);
 };
 

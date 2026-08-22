@@ -303,7 +303,7 @@ const AppointmentDetails = () => {
                     </div>
                     <div>
                         <span>Consultation Fee</span>
-                        <strong>₹{appointment.doctor?.consultationFee ?? 0}</strong>
+                        <strong>Rs. {appointment.doctor?.consultationFee ?? 0}</strong>
                     </div>
                     <div>
                         <span>Calendar</span>
@@ -389,14 +389,14 @@ const AppointmentDetails = () => {
                         {consultation.aiStatus === "processing" && (
                             <div className="ai-processing" style={{ padding: "1rem", backgroundColor: "rgba(245,158,11,0.05)", borderRadius: "8px", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b" }}>
                                 <p style={{ fontStyle: "italic", margin: 0 }}>
-                                    ⏳ Your patient-friendly summary is being prepared.
+                                    Your patient-friendly summary is being prepared.
                                 </p>
                             </div>
                         )}
                         {consultation.aiStatus === "failed" && (
                             <div className="error-box" style={{ padding: "1rem", backgroundColor: "rgba(239,68,68,0.05)", borderRadius: "8px", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
                                 <p style={{ margin: 0 }}>
-                                    ⚠️ Your consultation is available, but the AI summary is temporarily unavailable.
+                                    Your consultation is available, but the AI summary is temporarily unavailable.
                                 </p>
                             </div>
                         )}

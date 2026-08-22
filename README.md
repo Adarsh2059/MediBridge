@@ -117,7 +117,7 @@ appointmentHoldSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 Because MongoDB TTL deletion runs on background cycles (up to every 60 seconds), the service explicitly deletes expired holds before checking availability or creating new holds. This ensures that expired slots are immediately freed. Booking validates ownership of the hold, inserts the appointment within a transaction, and deletes the hold record atomically.
 
 ### IV. Notification Failure Handling
-To shield critical workflows (booking, cancellation, rescheduling) from network or SMTP service downtime, all email notifications use a background retry queue. The `sendEmail` service wraps SMTP dispatch inside a try-catch block. If mail delivery throws an exception, the system writes the recipient, subject, and payload to the `EmailQueue` collection with status `failed`. A lightweight background task runner runs every 30 seconds on the server, scanning the queue for failed entries. It retries transmission using an exponential backoff schedule (`retryCount * 2 minutes`) up to a maximum of 3 times.
+To shield critical workflows (booking, cancellation, rescheduling) from network or SMTP service downtime, all email notifications use a background retry queue. The `sendEmail` service wraps SMTP dispatch inside a try-catch block. If mail delivery throws an exception, the system writes the recipient, subject, and payload to the `EmailQueue` collection with status `failed`. A lightweight background task runner runs every 30 seconds on the server, scanning the queue for failed entries. It retries transmission using a progressive retry delay (`retryCount * 2 minutes`) up to a maximum of 3 times.
 
 ---
 
